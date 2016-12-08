@@ -1,0 +1,260 @@
+const int maxn = 100000;
+const int maxm = 1050;
+const int mod = 1000000007;
+
+int n;
+
+int point[2000];
+int point1[2000];
+int f[100];
+
+
+int l[4000], r[4000], cnt[4000];
+int res[4000], lazy[4000];
+
+int at(int i, int j) {
+	return (i * 2 + j);
+}
+
+int MOD(int x) {
+	int y;
+	y = x / mod;
+	return (x - y * mod);
+}
+
+void push_up(int u) {
+	cnt[u] = cnt[u * 2] + cnt[ u * 2 + 1];
+	res[u] = MOD(res[u * 2] + res[u * 2 + 1]);
+}
+
+void build(int u, int _l, int _r) {
+	int mid;
+	l[u] = _l;
+	r[u] = _r;
+	cnt[u] = 0;
+	res[u] = 0;
+	lazy[u] = 1;
+	if (_r - _l < 2) return;
+	mid = (_l + _r) / 2;
+	build(u * 2, _l, mid);
+	build(u * 2 + 1, mid, _r);
+}
+
+int isOdd(int x) {
+	int y;
+	y = x / 2;
+	x = x - y * 2;
+	if (x == 0) return (0);
+	return (1);
+}
+
+int power(int a, int p) {
+	int ans;
+	ans = 1;
+	a = MOD(a);
+	while (p) {
+		if (isOdd(p)) ans = MOD(ans * a);
+		p = p / 2;
+		a = MOD(a * a);
+	}
+	return (ans);
+}
+
+void push_down(int u) {
+	int ret;
+	ret = 0;
+	if(r[u] - l[u] < 2) ret = 1;
+	if(lazy[u] == 1) ret = 1;
+	if(ret) return;
+	res[u * 2] = MOD(res[u * 2] * lazy[u]);
+	res[ u * 2 + 1] = MOD(res[ u * 2 + 1] * lazy[u]);
+	lazy[u * 2] = MOD(lazy[u * 2] * lazy[u]);
+	lazy[ u * 2 + 1] = MOD(lazy[ u * 2 + 1] * lazy[u]);
+	lazy[u] = 1;
+}
+
+int query(int u, int _l, int _r, int L, int R) {
+	int ret, mid;
+	ret = 1;
+	if(L != _l) ret = 0;
+	if(_r != R) ret = 0;
+	if(ret) return (cnt[u]);
+	push_down(u);
+	mid = (_l + _r) / 2;
+	if (R <= mid) return (query(u * 2, _l, mid, L, R));
+	if (L >= mid) return (query( u * 2 + 1, mid, _r, L, R));
+	return (MOD(query(u * 2, _l, mid, L, mid) + query( u * 2 + 1, mid, _r, mid, R)));
+}
+
+void Insert(int u, int _l, int _r, int L, int R, int w) {
+	int mid, ret;
+	ret = 1;
+	if(L != _l) ret = 0;
+	if(_r != R) ret = 0;
+	if (ret) {
+		res[u] = MOD(res[u] + w);
+		cnt[u] = 1 + cnt[u];
+		return;
+	}
+	push_down(u);
+	mid = (_l + _r) / 2;
+	if (R <= mid) Insert(u * 2, _l, mid, L, R, w);
+	if (R > mid) Insert( u * 2 + 1, mid, _r, L, R, w);
+	push_up(u);
+}
+
+int query1(int u, int _l, int _r, int L, int R) {
+	int mid, ret;
+	ret = 1;
+	if(L != _l) ret = 0;
+	if(_r != R) ret = 0;
+	if (ret) return (res[u]);
+	push_down(u);
+	mid = (_l + _r) / 2;
+	if (R <= mid) return (query1(u * 2, _l, mid, L, R));
+	if (L >= mid) return (query1( u * 2 + 1, mid, _r, L, R));
+	return (MOD(query1(u * 2, _l, mid, L, mid) + query1(u * 2 + 1, mid, _r, mid, R)));
+}
+
+void update(int u, int _l, int _r, int L, int R) {
+	int mid, ret;
+	ret = 1;
+	if(L != _l) ret = 0;
+	if(_r != R) ret = 0;
+	if (ret) {
+		lazy[u] = MOD(2 * lazy[u]);
+		res[u] = MOD(2 * res[u]);
+		return;
+	}
+	push_down(u);
+	mid = (_l + _r) / 2;
+	if (R <= mid) {
+		update(u * 2, _l, mid, L, R);
+		return;
+	}
+	if (L >= mid) {
+		update(u * 2 + 1, mid, _r, L, R);
+		return;
+	}
+	update(u * 2, _l, mid, L, mid);
+	update(u * 2 + 1, mid, _r, mid, R);
+}
+
+void swap1(int i, int j) {
+	int tem1, tem2;
+	tem1 = point[at(i, 0)];
+	tem2 = point[at(i, 1)];
+	point[at(i, 0)] = point[at(j, 0)];
+	point[at(i, 1)] = point[at(j, 1)];
+	point[at(j, 0)] = tem1;
+	point[at(j, 1)] = tem2;
+}
+
+void swap2(int i, int j) {
+	int tem1, tem2;
+	tem1 = point1[at(i, 0)];
+	tem2 = point1[at(i, 1)];
+	point1[at(i, 0)] = point1[at(j, 0)];
+	point1[at(i, 1)] = point1[at(j, 1)];
+	point1[at(j, 0)] = tem1;
+	point1[at(j, 1)] = tem2;
+}
+
+void sort1() {
+	int i, j;
+	i = 1;
+	while (i < n) {
+		j = i + 1;
+		while (j <= n) {
+			if (point[at(i, 0)] > point[at(j, 0)]) {
+				swap1(i, j);
+			}
+			j = j + 1;
+		}
+		i = i + 1;
+	}
+}
+
+void sort2() {
+	int i, j;
+	i = 1;
+	while (i < n) {
+		j = i + 1;
+		while (j <= n) {
+			if (point1[at(i, 0)] > point1[at(j, 0)]) {
+				swap2(i, j);
+			}
+			j = j + 1;
+		}
+		i = i + 1;
+	}
+}
+
+void read_n() {
+	scanf(n);
+}
+
+void read() {
+	int i, x, y;
+	i = 1;
+	while (i <= n) {
+		scanf(x, y);
+		point[at(i, 0)] = x;
+		point[at(i, 1)] = y;
+		i = i + 1;
+	}
+}
+
+void main() {
+	int i, ans, base;
+	int cnt1, cnt2, tem1, tem2;
+	int bmp;
+	while (1 == 1) {
+		read_n();
+		if (n == -1) return;
+		read();
+		sort1();
+		i = 1;
+		while (i <= n) {
+			point1[at(i, 0)] = point[at(i, 1)];
+			point1[at(i, 1)] = i;
+			i = i + 1;
+		}
+		sort2();
+		base = 1;
+		f[point1[at(1, 1)]] = 1;
+		i = 2;
+		while (i <= n) {
+			bmp = 0;
+			if (point1[at(i, 0)] == point1[at(i - 1, 0)]) bmp = 1;
+			if (bmp == 1) {
+				f[point1[at(i, 1)]] = base;
+				i = i + 1;
+			}
+			if (bmp == 0) {
+				base = 1 + base;
+				f[point1[at(i, 1)]] = base;
+				i = i + 1;
+			}
+		}
+		build(1, 1, base + 1);
+		ans = 0;
+		i = 1;
+		while(i <= n){
+			cnt1 = query(1, 1, base + 1, 1, f[i] + 1);
+
+			ans = MOD(ans + MOD(MOD(power(2, cnt1) * power(2, point[at(i, 0)])) * power(3, point[at(i, 1)])));
+			tem1 = 0;
+			if (f[i] < base) tem1 = query1(1, 1, base + 1, f[i] + 1, base + 1);
+			ans = MOD(ans + MOD(tem1 * power(2, point[at(i, 0)])));
+			cnt2 = 0;
+			if (f[i] > 1) cnt2 = query(1, 1, base + 1, 1, f[i]);
+			tem2 = MOD(power(2, cnt2) * power(3, point[at(i, 1)]));
+			update(1, 1, base + 1, f[i], base + 1);
+			Insert(1, 1, base + 1, f[i], f[i] + 1, tem2);
+			i = i + 1;
+		}
+		printf(ans);
+		printf("\n");
+	}
+}
